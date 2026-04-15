@@ -15,12 +15,12 @@ class WidgetTree extends StatefulWidget {
 class _WidgetTreeState extends State<WidgetTree> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
+  final List<Widget> _screens = [
+    const DashboardScreen(),
     TrackingScreen(),
-    SafetyTipsScreen(),
-    ReportScreen(),
-    ProfileScreen(),
+    const SafetyTipsScreen(),
+    const ReportScreen(),
+    const ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {

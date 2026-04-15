@@ -1,4 +1,4 @@
-package com.sentinelle.app.sentinelle
+package com.sentinelle.app
 
 import io.flutter.embedding.android.FlutterActivity
 

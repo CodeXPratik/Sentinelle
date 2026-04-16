@@ -8,10 +8,10 @@ class GlassContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: Colors.white.withValues(alpha: 0.05),
-        border: Border.all(color: Colors.white.withValues( alpha: 0.1)),
       ),
       child: child,
     );

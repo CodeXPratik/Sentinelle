@@ -43,7 +43,7 @@ app.*.map.json
 /android/key.properties
 
 # Firebase (Sensitive Files)
-**/firebase_options.dart  <-- Added wildcard for safety
+**/firebase_options.dart
 google-services.json
 GoogleService-Info.plist
 .firebase/

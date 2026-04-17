@@ -25,10 +25,44 @@ class SentinelleApp extends StatelessWidget {
       title: 'Sentinelle',
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.black,
-        primaryColor: Colors.red,
+        scaffoldBackgroundColor: const Color(0xFF0E0E0E), // surface-dim
+        primaryColor: const Color(0xFFD692FF), // primary
+        colorScheme: ColorScheme.dark(
+          primary: const Color(0xFFD692FF),
+          secondary: const Color(0xFF474746),
+          tertiary: const Color(0xFFFE0000),
+          surface: const Color(0xFF0E0E0E),
+          onSurface: Colors.white,
+          onSurfaceVariant: const Color(0xFFABABAB),
+          surfaceContainer: const Color(0xFF191919),
+          surfaceContainerLow: const Color(0xFF131313),
+          surfaceContainerHighest: const Color(0xFF262626),
+          outlineVariant: const Color(0xFF484848),
+        ),
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(
+            fontFamily: 'Space Grotesk',
+            fontSize: 56, // 3.5rem equivalent
+            fontWeight: FontWeight.bold,
+            letterSpacing: -1.12, // -0.02em
+            color: Colors.white,
+          ),
+          headlineLarge: TextStyle(
+            fontFamily: 'Space Grotesk',
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          bodyLarge: TextStyle(
+            fontFamily: 'Inter',
+            color: Colors.white,
+          ),
+          bodyMedium: TextStyle(
+            fontFamily: 'Inter',
+            color: Color(0xFFABABAB),
+          ),
+        ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.black,
+          backgroundColor: Colors.transparent,
           elevation: 0,
         ),
       ),

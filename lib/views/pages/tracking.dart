@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../widget_tree.dart';
 import '../widgets/glass_conatiner.dart';
 import '../widgets/custom_app_bar.dart';
@@ -23,6 +25,18 @@ class _TrackingScreenState extends State<TrackingScreen> {
   final TextEditingController _reportController = TextEditingController();
   String _selectedCategory = 'Harassment';
 
+  @override
+  void initState() {
+    super.initState();
+    _requestLocationPermission();
+  }
+
+  Future<void> _requestLocationPermission() async {
+    if (await Permission.location.isDenied) {
+      await Permission.location.request();
+    }
+  }
+
   final List<Map<String, dynamic>> _categories = [
     {'label': 'Harassment', 'icon': Icons.person_off},
     {'label': 'Poor Lighting', 'icon': Icons.light_mode},
@@ -41,120 +55,135 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: widget.isMapBackground
-          ? Colors.transparent
-          : const Color(0xFF0E0E0E),
-      extendBodyBehindAppBar: true,
-      appBar: CustomAppBar(
-        title: 'SENTINELLE',
-        subtitle: 'User Profile', // DEVELOPER: Replace with dynamic user name
-        onSearchPressed: () {
-          WidgetTree.of(context)?.setSelectedIndex(0, focusSearch: true);
-        },
-      ),
-      body: Stack(
-        children: [
-          // Background Map (Only show if not using global background)
-          if (!widget.isMapBackground)
-            Positioned.fill(
-              child: GoogleMap(
-                initialCameraPosition: const CameraPosition(
-                  target: _initialLocation,
-                  zoom: 14.0,
-                ),
-                mapType: MapType.normal,
-                myLocationEnabled: true,
-                myLocationButtonEnabled: false,
-                zoomControlsEnabled: false,
-                style: _darkMapStyle,
-              ),
-            ),
-
-          // Gradient Overlays
+    // When using a map background, we avoid using a Scaffold as the root
+    // to prevent it from absorbing gestures intended for the map.
+    final content = Stack(
+      children: [
+        // Background Map (Only show if not using global background)
+        if (!widget.isMapBackground)
           Positioned.fill(
-            child: IgnorePointer(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      const Color(0xFF0E0E0E).withValues(alpha: 0.8),
-                      Colors.transparent,
-                      const Color(0xFF0E0E0E).withValues(alpha: 0.8),
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                  ),
-                ),
+            child: GoogleMap(
+              initialCameraPosition: const CameraPosition(
+                target: _initialLocation,
+                zoom: 14.0,
               ),
+              mapType: MapType.normal,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+              style: _darkMapStyle,
             ),
           ),
 
-          // SOS FAB
-          const SosFab(top: 190),
-
-          // Report Button
-          Positioned(
-            top: 260,
-            right: 20,
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isReporting = !_isReporting;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: _isReporting
-                      ? const Color(0xFFD692FF)
-                      : const Color(0xFF262626),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black, width: 4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _isReporting
-                          ? const Color(0xFFD692FF).withValues(alpha: 0.4)
-                          : Colors.black.withValues(alpha: 0.4),
-                      blurRadius: 20,
-                    ),
+        // Gradient Overlays
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(0xFF0E0E0E).withValues(alpha: 0.8),
+                    Colors.transparent,
+                    const Color(0xFF0E0E0E).withValues(alpha: 0.8),
                   ],
-                ),
-                child: Icon(
-                  _isReporting ? Icons.close : Icons.report_problem,
-                  color: _isReporting ? Colors.black : const Color(0xFFD692FF),
-                  size: 28,
+                  stops: const [0.0, 0.5, 1.0],
                 ),
               ),
             ),
           ),
+        ),
 
-          // Bottom Navigation Panel
-          DraggableScrollableSheet(
-            initialChildSize: 0.45,
-            minChildSize: 0.25,
-            maxChildSize: 0.9,
-            builder: (context, scrollController) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 110),
-                  child: GlassContainer(
-                    borderRadius: 40,
-                    opacity: 0.8,
-                    child: _isReporting
-                        ? _buildReportContent(scrollController)
-                        : _buildRouteContent(scrollController),
-                  ),
-                ),
-              );
+        // Custom AppBar positioned at the top
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: CustomAppBar(
+            title: 'SENTINELLE',
+            subtitle: FirebaseAuth.instance.currentUser?.displayName ??
+                FirebaseAuth.instance.currentUser?.email ??
+                'Sentinelle User',
+            onSearchPressed: () {
+              WidgetTree.of(context)?.setSelectedIndex(0, focusSearch: true);
             },
           ),
-        ],
-      ),
+        ),
+
+        // SOS FAB
+        const SosFab(top: 190),
+
+        // Report Button
+        Positioned(
+          top: 260,
+          right: 20,
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _isReporting = !_isReporting;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: _isReporting
+                    ? const Color(0xFFD692FF)
+                    : const Color(0xFF262626),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.black, width: 4),
+                boxShadow: [
+                  BoxShadow(
+                    color: _isReporting
+                        ? const Color(0xFFD692FF).withValues(alpha: 0.4)
+                        : Colors.black.withValues(alpha: 0.4),
+                    blurRadius: 20,
+                  ),
+                ],
+              ),
+              child: Icon(
+                _isReporting ? Icons.close : Icons.report_problem,
+                color: _isReporting ? Colors.black : const Color(0xFFD692FF),
+                size: 28,
+              ),
+            ),
+          ),
+        ),
+
+        // Bottom Navigation Panel
+        DraggableScrollableSheet(
+          initialChildSize: 0.45,
+          minChildSize: 0.25,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 110),
+                child: GlassContainer(
+                  borderRadius: 40,
+                  opacity: 0.8,
+                  child: _isReporting
+                      ? _buildReportContent(scrollController)
+                      : _buildRouteContent(scrollController),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+
+    if (widget.isMapBackground) {
+      return content;
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF0E0E0E),
+      extendBodyBehindAppBar: true,
+      body: content,
     );
   }
 
@@ -391,7 +420,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
-                    'Anomaly Report Broadcasted to Nearby Sentinels',
+                    'Anomaly Report Broadcasted to Nearby Sentinelles',
                   ),
                   backgroundColor: Color(0xFF4ADE80),
                   behavior: SnackBarBehavior.floating,

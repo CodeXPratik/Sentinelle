@@ -1,5 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart'; // Add this
+import 'package:google_maps_flutter_android/google_maps_flutter_android.dart';
+import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
+import 'package:sentinelle/views/pages/auth/login_screen.dart';
 import 'firebase_options.dart'; // This file is generated after running 'flutterfire configure'
 import 'views/widget_tree.dart';
 
@@ -8,10 +12,15 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 2. Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // 3. Enable Hybrid Composition for Google Maps on Android
+  // This often fixes touch interaction issues on physical devices.
+  final GoogleMapsFlutterPlatform mapsImplementation =
+      GoogleMapsFlutterPlatform.instance;
+  if (mapsImplementation is GoogleMapsFlutterAndroid) {
+    mapsImplementation.useAndroidViewSurface = true;
+  }
   runApp(const SentinelleApp());
 }
 
@@ -52,21 +61,30 @@ class SentinelleApp extends StatelessWidget {
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
-          bodyLarge: TextStyle(
-            fontFamily: 'Inter',
-            color: Colors.white,
-          ),
-          bodyMedium: TextStyle(
-            fontFamily: 'Inter',
-            color: Color(0xFFABABAB),
-          ),
+          bodyLarge: TextStyle(fontFamily: 'Inter', color: Colors.white),
+          bodyMedium: TextStyle(fontFamily: 'Inter', color: Color(0xFFABABAB)),
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
       ),
-      home: const WidgetTree(),
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(color: Color(0xFFD692FF)),
+              ),
+            );
+          }
+          if (snapshot.hasData) {
+            return const WidgetTree();
+          }
+          return const LoginScreen();
+        },
+      ),
     );
   }
 }

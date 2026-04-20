@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../widgets/glass_conatiner.dart';
 import '../widgets/custom_app_bar.dart';
@@ -10,9 +11,11 @@ class SafetyTipsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF0E0E0E),
       extendBodyBehindAppBar: true,
-      appBar: const CustomAppBar(
+      appBar: CustomAppBar(
         title: 'SENTINELLE',
-        subtitle: 'User Profile', // DEVELOPER: Replace with dynamic user name
+        subtitle: FirebaseAuth.instance.currentUser?.displayName ??
+            FirebaseAuth.instance.currentUser?.email ??
+            'Sentinelle User',
         showSearch: false,
       ),
       body: Stack(

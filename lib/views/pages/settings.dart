@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../widgets/glass_conatiner.dart';
 import '../widgets/custom_app_bar.dart';
@@ -7,11 +8,13 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0E0E0E),
-      appBar: const CustomAppBar(
+      appBar: CustomAppBar(
         title: 'SENTINELLE',
-        subtitle: 'User Profile', // DEVELOPER: Replace with dynamic user name
+        subtitle: user?.displayName ?? user?.email ?? 'Sentinelle User',
         showSearch: false,
       ),
       body: SingleChildScrollView(
@@ -20,7 +23,7 @@ class SettingsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeaderContext(),
+              _buildHeaderContext(user),
               const SizedBox(height: 40),
               _buildEmergencyContacts(),
               const SizedBox(height: 40),
@@ -35,7 +38,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderContext() {
+  Widget _buildHeaderContext(User? user) {
     return GlassContainer(
       borderRadius: 32,
       opacity: 0.7,
@@ -48,9 +51,9 @@ class SettingsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Security Settings',
-                    style: TextStyle(
+                  Text(
+                    user?.displayName ?? 'Sentinelle User',
+                    style: const TextStyle(
                       fontFamily: 'Space Grotesk',
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -59,7 +62,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Manage your protective protocols and digital footprint.',
+                    user?.email ?? 'Protective protocols active.',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.6),
                       fontSize: 14,

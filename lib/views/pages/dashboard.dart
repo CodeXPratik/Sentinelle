@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../widgets/glass_conatiner.dart';
@@ -43,134 +44,147 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: widget.isMapBackground
-          ? Colors.transparent
-          : const Color(0xFF0E0E0E),
-      extendBodyBehindAppBar: true,
-      appBar: const CustomAppBar(
-        title: 'SENTINELLE',
-        subtitle: 'User Profile', // DEVELOPER: Replace with dynamic user name
-        showSearch: false,
-      ),
-      body: Stack(
-        children: [
-          // Background Map (Only show if not using global background)
-          if (!widget.isMapBackground)
-            Positioned.fill(
-              child: GoogleMap(
-                initialCameraPosition: const CameraPosition(
-                  target: _initialLocation,
-                  zoom: 14.0,
-                ),
-                mapType: MapType.normal,
-                myLocationEnabled: true,
-                myLocationButtonEnabled: false,
-                zoomControlsEnabled: false,
-              ),
-            ),
-
-          // Gradient Overlays
+    final content = Stack(
+      children: [
+        // Background Map (Only show if not using global background)
+        if (!widget.isMapBackground)
           Positioned.fill(
-            child: IgnorePointer(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      const Color(0xFF0E0E0E).withValues(alpha: 0.8),
-                      Colors.transparent,
-                      const Color(0xFF0E0E0E).withValues(alpha: 0.8),
-                    ],
-                    stops: const [0.0, 0.5, 1.0],
-                  ),
-                ),
+            child: GoogleMap(
+              initialCameraPosition: const CameraPosition(
+                target: _initialLocation,
+                zoom: 14.0,
               ),
+              mapType: MapType.normal,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
             ),
           ),
 
-          // Search Bar
-          Positioned(
-            top: 135,
-            left: 20,
-            right: 20,
-            child: GlassContainer(
-              borderRadius: 16,
-              opacity: 0.8,
-              child: Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () => _searchFocusNode.requestFocus(),
-                      child: const Icon(
-                        Icons.travel_explore,
-                        color: Colors.white54,
-                      ),
-                    ),
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        focusNode: _searchFocusNode,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: const InputDecoration(
-                          hintText: 'Search safe zones...',
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                        ),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_searchController.text.isNotEmpty) {
-                          WidgetTree.of(context)?.setSelectedIndex(1);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD692FF),
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                      ),
-                      child: const Text(
-                        'FIND',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
+        // Gradient Overlays
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(0xFF0E0E0E).withValues(alpha: 0.8),
+                    Colors.transparent,
+                    const Color(0xFF0E0E0E).withValues(alpha: 0.8),
                   ],
+                  stops: const [0.0, 0.5, 1.0],
                 ),
               ),
             ),
           ),
+        ),
 
-          // SOS FAB
-          const SosFab(top: 210),
-
-          // Bottom Content Panel
-          DraggableScrollableSheet(
-            initialChildSize: 0.45,
-            minChildSize: 0.25,
-            maxChildSize: 0.9,
-            builder: (context, scrollController) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 110),
-                  child: GlassContainer(
-                    borderRadius: 40,
-                    opacity: 0.8,
-                    child: _buildDashboardContent(scrollController),
-                  ),
-                ),
-              );
-            },
+        // Custom AppBar (Manual positioning to avoid Scaffold blocking)
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: CustomAppBar(
+            title: 'SENTINELLE',
+            subtitle: FirebaseAuth.instance.currentUser?.displayName ??
+                FirebaseAuth.instance.currentUser?.email ??
+                'Sentinelle User',
+            showSearch: false,
           ),
-        ],
-      ),
+        ),
+
+        // Search Bar
+        Positioned(
+          top: 135,
+          left: 20,
+          right: 20,
+          child: GlassContainer(
+            borderRadius: 16,
+            opacity: 0.8,
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Row(
+                children: [
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () => _searchFocusNode.requestFocus(),
+                    child: const Icon(
+                      Icons.travel_explore,
+                      color: Colors.white54,
+                    ),
+                  ),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: 'Search safe zones...',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_searchController.text.isNotEmpty) {
+                        WidgetTree.of(context)?.setSelectedIndex(1);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD692FF),
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                    ),
+                    child: const Text(
+                      'FIND',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // SOS FAB
+        const SosFab(top: 210),
+
+        // Bottom Content Panel
+        DraggableScrollableSheet(
+          initialChildSize: 0.45,
+          minChildSize: 0.25,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 110),
+                child: GlassContainer(
+                  borderRadius: 40,
+                  opacity: 0.8,
+                  child: _buildDashboardContent(scrollController),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+
+    if (widget.isMapBackground) {
+      return content;
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF0E0E0E),
+      extendBodyBehindAppBar: true,
+      body: content,
     );
   }
 
@@ -259,7 +273,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           title: 'Safe Route Tip',
           time: '1h ago',
           description:
-              'Park Avenue is currently well-lit and monitored by Sentinel nodes.',
+              'Park Avenue is currently well-lit and monitored by Sentinelle nodes.',
         ),
         const SizedBox(height: 100),
       ],

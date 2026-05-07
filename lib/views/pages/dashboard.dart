@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../widgets/glass_conatiner.dart';
+import 'package:geolocator/geolocator.dart';
+import '../widgets/glass_container.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/sos_fab.dart';
 import '../widgets/alert_card.dart';
@@ -18,21 +19,46 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  static const LatLng _initialLocation = LatLng(
-    48.8566,
-    2.3522,
-  ); // Paris coordinates
+  LatLng _initialLocation = const LatLng(0, 0); // Default to (0,0) before fetch
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  GoogleMapController? _mapController;
 
   @override
   void initState() {
     super.initState();
+    _determinePosition();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (WidgetTree.of(context)?.consumeFocusSearch() ?? false) {
         _searchFocusNode.requestFocus();
       }
     });
+  }
+
+  Future<void> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) return;
+    }
+
+    if (permission == LocationPermission.deniedForever) return;
+
+    Position position = await Geolocator.getCurrentPosition();
+    if (mounted) {
+      setState(() {
+        _initialLocation = LatLng(position.latitude, position.longitude);
+      });
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(_initialLocation, 15.0),
+      );
+    }
   }
 
   @override
@@ -50,10 +76,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (!widget.isMapBackground)
           Positioned.fill(
             child: GoogleMap(
-              initialCameraPosition: const CameraPosition(
+              initialCameraPosition: CameraPosition(
                 target: _initialLocation,
-                zoom: 14.0,
+                zoom: 15.0,
               ),
+              onMapCreated: (controller) => _mapController = controller,
               mapType: MapType.normal,
               myLocationEnabled: true,
               myLocationButtonEnabled: false,

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 
 class SosActiveScreen extends StatefulWidget {
   final bool isMapBackground;
@@ -18,16 +19,13 @@ class _SosActiveScreenState extends State<SosActiveScreen>
   late AnimationController _timerController;
   int _secondsLeft = 5;
   Timer? _timer;
-  static const LatLng _initialLocation = LatLng(
-    48.8566,
-    2.3522,
-  ); // Paris coordinates
+  LatLng _initialLocation = const LatLng(0, 0); // Default to (0,0) before fetch
+  GoogleMapController? _mapController;
 
   @override
   void initState() {
     super.initState();
-    // Reset camera to user location when SOS is activated
-    // WidgetTree.of(context)?.updateCameraPosition(CameraPosition(target: _initialLocation, zoom: 17.0));
+    _determinePosition();
 
     _pulseController = AnimationController(
       vsync: this,
@@ -60,6 +58,32 @@ class _SosActiveScreenState extends State<SosActiveScreen>
     });
   }
 
+  Future<void> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) return;
+    }
+
+    if (permission == LocationPermission.deniedForever) return;
+
+    Position position = await Geolocator.getCurrentPosition();
+    if (mounted) {
+      setState(() {
+        _initialLocation = LatLng(position.latitude, position.longitude);
+      });
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(_initialLocation, 15.0),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _pulseController.dispose();
@@ -83,10 +107,11 @@ class _SosActiveScreenState extends State<SosActiveScreen>
               child: Opacity(
                 opacity: 0.4,
                 child: GoogleMap(
-                  initialCameraPosition: const CameraPosition(
+                  initialCameraPosition: CameraPosition(
                     target: _initialLocation,
                     zoom: 15.0,
                   ),
+                  onMapCreated: (controller) => _mapController = controller,
                   mapType: MapType.normal,
                   myLocationEnabled: true,
                   myLocationButtonEnabled: false,
@@ -435,9 +460,9 @@ class _SosActiveScreenState extends State<SosActiveScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'V_COORD: 40.7128° N, 74.0060° W',
-                  style: TextStyle(
+                Text(
+                  'V_COORD: ${_initialLocation.latitude.toStringAsFixed(4)}° N, ${_initialLocation.longitude.toStringAsFixed(4)}° E',
+                  style: const TextStyle(
                     color: Color(0xFFFF725E),
                     fontSize: 8,
                     fontFamily: 'monospace',

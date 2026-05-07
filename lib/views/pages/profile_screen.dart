@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../widgets/glass_conatiner.dart';
+import '../widgets/glass_container.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -185,9 +185,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: ElevatedButton(
         onPressed: () async {
           await _authService.signOut();
-          if (mounted) {
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          }
+          if (!context.mounted) return;
+          Navigator.of(context).popUntil((route) => route.isFirst);
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,

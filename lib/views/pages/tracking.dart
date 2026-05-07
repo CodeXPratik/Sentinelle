@@ -1,11 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../widget_tree.dart';
-import '../widgets/glass_conatiner.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/sos_fab.dart';
+import '../widgets/glass_container.dart';
+import '../widget_tree.dart';
 
 class TrackingScreen extends StatefulWidget {
   final bool isMapBackground;
@@ -65,7 +65,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             child: GoogleMap(
               initialCameraPosition: const CameraPosition(
                 target: _initialLocation,
-                zoom: 14.0,
+                zoom: 15.0,
               ),
               mapType: MapType.normal,
               myLocationEnabled: true,

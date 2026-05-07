@@ -2,12 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:sentinelle/views/pages/sos_active.dart';
 import 'pages/dashboard.dart';
 import 'pages/tracking.dart';
 import 'pages/safety_tips.dart';
 import 'pages/settings.dart';
-import 'widgets/glass_conatiner.dart';
+import 'widgets/glass_container.dart';
 
 class WidgetTree extends StatefulWidget {
   const WidgetTree({super.key});
@@ -23,9 +24,46 @@ class _WidgetTreeState extends State<WidgetTree> {
   int _selectedIndex = 0;
   bool _shouldFocusSearch = false;
   CameraPosition _currentCameraPosition = const CameraPosition(
-    target: LatLng(48.8566, 2.3522),
-    zoom: 14.0,
+    target: LatLng(0, 0),
+    zoom: 15.0,
   );
+  GoogleMapController? _mapController;
+
+  @override
+  void initState() {
+    super.initState();
+    _determinePosition();
+  }
+
+  Future<void> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) return;
+    }
+
+    if (permission == LocationPermission.deniedForever) return;
+
+    Position position = await Geolocator.getCurrentPosition();
+    if (mounted) {
+      LatLng currentLatLng = LatLng(position.latitude, position.longitude);
+      setState(() {
+        _currentCameraPosition = CameraPosition(
+          target: currentLatLng,
+          zoom: 15.0,
+        );
+      });
+      _mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(currentLatLng, 15.0),
+      );
+    }
+  }
 
   void setSelectedIndex(int index, {bool focusSearch = false}) {
     setState(() {
@@ -62,6 +100,7 @@ class _WidgetTreeState extends State<WidgetTree> {
           Positioned.fill(
             child: GoogleMap(
               initialCameraPosition: _currentCameraPosition,
+              onMapCreated: (controller) => _mapController = controller,
               onCameraMove: (position) => _currentCameraPosition = position,
               mapType: MapType.normal,
               myLocationEnabled: true,

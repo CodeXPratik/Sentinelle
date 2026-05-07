@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/glass_conatiner.dart';
+import 'package:geolocator/geolocator.dart';
+import '../widgets/glass_container.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -11,6 +12,8 @@ class ReportScreen extends StatefulWidget {
 class _ReportScreenState extends State<ReportScreen> {
   final TextEditingController _reportController = TextEditingController();
   String _selectedCategory = 'Harassment';
+  String _currentAddress = 'Fetching location...';
+  Position? _currentPosition;
 
   final List<Map<String, dynamic>> _categories = [
     {'label': 'Harassment', 'icon': Icons.person_off},
@@ -21,6 +24,49 @@ class _ReportScreenState extends State<ReportScreen> {
     {'label': 'Theft', 'icon': Icons.inventory_2},
     {'label': 'Other', 'icon': Icons.more_horiz},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _determinePosition();
+  }
+
+  Future<void> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) setState(() => _currentAddress = 'Location services disabled');
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) setState(() => _currentAddress = 'Location permission denied');
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) setState(() => _currentAddress = 'Location permissions permanently denied');
+      return;
+    }
+
+    try {
+      Position position = await Geolocator.getCurrentPosition();
+      if (mounted) {
+        setState(() {
+          _currentPosition = position;
+          _currentAddress = '${position.latitude.toStringAsFixed(4)}° N, ${position.longitude.toStringAsFixed(4)}° E';
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _currentAddress = 'Error fetching location');
+    }
+  }
 
   @override
   void dispose() {
@@ -140,11 +186,11 @@ class _ReportScreenState extends State<ReportScreen> {
                           ),
                         ),
                         const SizedBox(width: 16),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 'Current Location detected',
                                 style: TextStyle(
                                   color: Colors.white70,
@@ -153,8 +199,8 @@ class _ReportScreenState extends State<ReportScreen> {
                                 ),
                               ),
                               Text(
-                                'Avenue des Champs-Élysées, Paris',
-                                style: TextStyle(
+                                _currentAddress,
+                                style: const TextStyle(
                                   color: Colors.white38,
                                   fontSize: 12,
                                 ),
@@ -162,10 +208,13 @@ class _ReportScreenState extends State<ReportScreen> {
                             ],
                           ),
                         ),
-                        const Icon(
-                          Icons.refresh,
-                          color: Colors.white24,
-                          size: 18,
+                        IconButton(
+                          onPressed: _determinePosition,
+                          icon: const Icon(
+                            Icons.refresh,
+                            color: Colors.white24,
+                            size: 18,
+                          ),
                         ),
                       ],
                     ),

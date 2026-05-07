@@ -43,7 +43,7 @@ flutter run
 
 - `lib/main.dart`: App entry point and Firebase initialization.
 - `lib/views/widget_tree.dart`: Handles authentication state and navigation flow.
-- `lib/views/widgets/glass_conatiner.dart`: Custom glassmorphism container used across the app.
+- `lib/views/widgets/glass_container.dart`: Custom glassmorphism container used across the app.
 - `lib/firebase_options.dart`: Auto-generated configuration (do not edit manually).
 
 ## Contribution Guidelines

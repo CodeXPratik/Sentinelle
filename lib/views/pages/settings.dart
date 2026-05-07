@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../widgets/glass_conatiner.dart';
+import '../widgets/glass_container.dart';
 import '../widgets/custom_app_bar.dart';
 
 class SettingsScreen extends StatelessWidget {

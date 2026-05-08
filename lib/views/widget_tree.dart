@@ -3,6 +3,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shake/shake.dart';
+import 'pages/sos_active.dart';
 import 'pages/dashboard.dart';
 import 'pages/tracking.dart';
 import 'pages/safety_tips.dart';
@@ -27,11 +29,38 @@ class _WidgetTreeState extends State<WidgetTree> {
     zoom: 15.0,
   );
   GoogleMapController? _mapController;
+  ShakeDetector? _shakeDetector;
 
   @override
   void initState() {
     super.initState();
     _determinePosition();
+    _initShake();
+  }
+
+  void _initShake() {
+    _shakeDetector = ShakeDetector.autoStart(
+      onPhoneShake: (event) {
+        _handleShakeSOS();
+      },
+      shakeThresholdGravity: 2.7,
+    );
+  }
+
+  void _handleShakeSOS() {
+    if (mounted) {
+      // Navigate to the SOS Active screen which has the countdown and alert logic
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SosActiveScreen()),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _shakeDetector?.stopListening();
+    super.dispose();
   }
 
   Future<void> _determinePosition() async {

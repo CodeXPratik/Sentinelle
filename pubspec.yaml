@@ -43,6 +43,7 @@ dependencies:
   cloud_firestore: ^6.3.0
   firebase_core: ^4.7.0
   firebase_database: ^12.3.0
+  url_launcher: ^6.3.1
 
   google_maps_flutter_android: any
   google_maps_flutter_platform_interface: any

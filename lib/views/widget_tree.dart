@@ -3,7 +3,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:sentinelle/views/pages/sos_active.dart';
 import 'pages/dashboard.dart';
 import 'pages/tracking.dart';
 import 'pages/safety_tips.dart';
@@ -124,14 +123,11 @@ class _WidgetTreeState extends State<WidgetTree> {
               const TrackingScreen(isMapBackground: true),
               const SafetyTipsScreen(),
               const SettingsScreen(),
-              const SosActiveScreen(isMapBackground: true),
             ],
           ),
         ],
       ),
-      bottomNavigationBar: _selectedIndex == 4
-          ? null
-          : Padding(
+      bottomNavigationBar: Padding(
               padding: const EdgeInsets.only(bottom: 24, left: 16, right: 16),
               child: GlassContainer(
                 borderRadius: 30,

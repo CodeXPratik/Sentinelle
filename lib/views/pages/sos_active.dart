@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../services/emergency_service.dart';
 
 class SosActiveScreen extends StatefulWidget {
   final bool isMapBackground;
@@ -21,6 +22,10 @@ class _SosActiveScreenState extends State<SosActiveScreen>
   Timer? _timer;
   LatLng _initialLocation = const LatLng(0, 0); // Default to (0,0) before fetch
   GoogleMapController? _mapController;
+  final EmergencyService _emergencyService = EmergencyService();
+  StreamSubscription<Position>? _locationSubscription;
+  bool _isEmergencyActive = false;
+  String _priorityContactName = '';
 
   @override
   void initState() {
@@ -53,9 +58,60 @@ class _SosActiveScreenState extends State<SosActiveScreen>
         });
       } else {
         _timer?.cancel();
-        // Trigger emergency transmission logic here
+        _triggerEmergency();
       }
     });
+  }
+
+  Future<void> _triggerEmergency() async {
+    if (_isEmergencyActive) return;
+
+    final position = await Geolocator.getCurrentPosition();
+    
+    // Fetch contacts to show who we are alerting
+    final user = _emergencyService.getCurrentUser();
+    if (user != null) {
+      final userDoc = await _emergencyService.getUserDoc(user.uid);
+      final List<dynamic> contacts = userDoc.data()?['emergency_contacts'] ?? [];
+      if (contacts.isNotEmpty) {
+        setState(() {
+          _priorityContactName = contacts.last['name'];
+        });
+      }
+    }
+
+    await _emergencyService.startEmergency(position);
+
+    setState(() {
+      _isEmergencyActive = true;
+      _secondsLeft = 0;
+      _priorityContactName = 'All Contacts';
+    });
+
+    _locationSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      ),
+    ).listen((Position position) {
+      _emergencyService.updateLiveLocation(position);
+      if (mounted) {
+        setState(() {
+          _initialLocation = LatLng(position.latitude, position.longitude);
+        });
+        _mapController?.animateCamera(
+          CameraUpdate.newLatLng(_initialLocation),
+        );
+      }
+    });
+  }
+
+  Future<void> _stopEmergency() async {
+    await _emergencyService.stopEmergency();
+    await _locationSubscription?.cancel();
+    if (mounted) {
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _determinePosition() async {
@@ -90,6 +146,7 @@ class _SosActiveScreenState extends State<SosActiveScreen>
     _rotationController.dispose();
     _timerController.dispose();
     _timer?.cancel();
+    _locationSubscription?.cancel();
     super.dispose();
   }
 
@@ -317,7 +374,7 @@ class _SosActiveScreenState extends State<SosActiveScreen>
             ],
           ),
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: _isEmergencyActive ? null : _triggerEmergency,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
@@ -325,9 +382,9 @@ class _SosActiveScreenState extends State<SosActiveScreen>
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: const Text(
-              'ALERT AUTHORITIES NOW',
-              style: TextStyle(
+            child: Text(
+              _isEmergencyActive ? 'PROTOCOL TRANSMITTING' : 'ALERT AUTHORITIES NOW',
+              style: const TextStyle(
                 color: Colors.black,
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
@@ -337,15 +394,17 @@ class _SosActiveScreenState extends State<SosActiveScreen>
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Automatic emergency dispatch will be triggered in 5 seconds. Sentinelle is currently sharing your location and live audio with your emergency contacts.',
+        Text(
+          _isEmergencyActive 
+            ? 'Alerting $_priorityContactName and broadcasting live location to all contacts.'
+            : 'Automatic emergency dispatch will be triggered in 5 seconds. Sentinelle is sharing your location with your emergency contacts.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white54, fontSize: 11, height: 1.4),
+          style: const TextStyle(color: Colors.white54, fontSize: 11, height: 1.4),
         ),
         const SizedBox(height: 24),
         // Cancel Action
         InkWell(
-          onTap: () => Navigator.pop(context),
+          onTap: _stopEmergency,
           child: Column(
             children: [
               Container(

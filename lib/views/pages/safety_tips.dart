@@ -103,7 +103,7 @@ class SafetyTipsScreen extends StatelessWidget {
                 ),
                 _buildEmergencyContact(
                   'AMBULANCE',
-                  '15',
+                  '108',
                   Icons.medical_services,
                 ),
               ],
